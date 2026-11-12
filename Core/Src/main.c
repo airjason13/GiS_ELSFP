@@ -22,6 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "platform_spi.h"
 
 /* USER CODE END Includes */
 
@@ -104,6 +105,11 @@ int main(void)
   MX_SPI2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  /* Bind the platform SPI interface after CubeMX initializes SPI2. */
+  if (!spi_init())
+  {
+    Error_Handler();
+  }
 
   /* USER CODE END 2 */
 

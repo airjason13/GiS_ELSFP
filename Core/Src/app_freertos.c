@@ -22,6 +22,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "platform_log.h"
+#include "shared_data.h"
+#include "messages_queue.h"
+#include "debug_task.h"
+#include "safety_task.h"
+#include "host_task.h"
+#include "msm_task.h"
+#include "laser_task.h"
+#include "thermal_task.h"
+#include "supervision_task.h"
+#include "storage_task.h"
 
 /* USER CODE END Includes */
 
@@ -93,6 +104,43 @@ const osThreadAttr_t StorageTask_attributes = {
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 512 * 4
 };
+/* Definitions for MsmTask */
+osThreadId_t MsmTaskHandle;
+const osThreadAttr_t MsmTask_attributes = {
+  .name = "MsmTask",
+  .priority = (osPriority_t) osPriorityHigh,
+  .stack_size = 256 * 4
+};
+/* Definitions for HostCmdMsgQueue */
+osMessageQueueId_t HostCmdMsgQueueHandle;
+const osMessageQueueAttr_t HostCmdMsgQueue_attributes = {
+  .name = "HostCmdMsgQueue"
+};
+/* Definitions for LaserMsgQueue */
+osMessageQueueId_t LaserMsgQueueHandle;
+const osMessageQueueAttr_t LaserMsgQueue_attributes = {
+  .name = "LaserMsgQueue"
+};
+/* Definitions for TecMsgQueue */
+osMessageQueueId_t TecMsgQueueHandle;
+const osMessageQueueAttr_t TecMsgQueue_attributes = {
+  .name = "TecMsgQueue"
+};
+/* Definitions for ControlResultMsg */
+osMessageQueueId_t ControlResultMsgHandle;
+const osMessageQueueAttr_t ControlResultMsg_attributes = {
+  .name = "ControlResultMsg"
+};
+/* Definitions for StorageCmdMsgQueue */
+osMessageQueueId_t StorageCmdMsgQueueHandle;
+const osMessageQueueAttr_t StorageCmdMsgQueue_attributes = {
+  .name = "StorageCmdMsgQueue"
+};
+/* Definitions for MsmMsgQueue */
+osMessageQueueId_t MsmMsgQueueHandle;
+const osMessageQueueAttr_t MsmMsgQueue_attributes = {
+  .name = "MsmMsgQueue"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -110,7 +158,14 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
+  if (PlatformLog_Init() != 0)
+  {
+    Error_Handler();
+  }
+  if (!SharedData_Init())
+  {
+    Error_Handler();
+  }
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -120,6 +175,18 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+  /* creation of HostCmdMsgQueue */
+  HostCmdMsgQueueHandle = osMessageQueueNew (32, sizeof(HostCmdMsg_t), &HostCmdMsgQueue_attributes);
+  /* creation of LaserMsgQueue */
+  LaserMsgQueueHandle = osMessageQueueNew (16, sizeof(LaserMsg_t), &LaserMsgQueue_attributes);
+  /* creation of TecMsgQueue */
+  TecMsgQueueHandle = osMessageQueueNew (16, sizeof(TecMsg_t), &TecMsgQueue_attributes);
+  /* creation of ControlResultMsg */
+  ControlResultMsgHandle = osMessageQueueNew (16, sizeof(ControlResultMsg_t), &ControlResultMsg_attributes);
+  /* creation of StorageCmdMsgQueue */
+  StorageCmdMsgQueueHandle = osMessageQueueNew (32, sizeof(StorageCmdMsg_t), &StorageCmdMsgQueue_attributes);
+  /* creation of MsmMsgQueue */
+  MsmMsgQueueHandle = osMessageQueueNew (16, sizeof(MsmMsg_t), &MsmMsgQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -145,7 +212,14 @@ void MX_FREERTOS_Init(void) {
   /* creation of StorageTask */
   StorageTaskHandle = osThreadNew(StorageTask , NULL, &StorageTask_attributes);
 
+  /* creation of MsmTask */
+  MsmTaskHandle = osThreadNew(StartTask08, NULL, &MsmTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
+  if ((MsmTaskHandle == NULL) || (MsmMsgQueueHandle == NULL))
+  {
+    Error_Handler();
+  }
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -164,11 +238,7 @@ void MX_FREERTOS_Init(void) {
 void StartSysdebugTask(void *argument)
 {
   /* USER CODE BEGIN SysdebugTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  DebugTask_Run(argument);
   /* USER CODE END SysdebugTask */
 }
 
@@ -182,11 +252,7 @@ void StartSysdebugTask(void *argument)
 void StartSafetyTask(void *argument)
 {
   /* USER CODE BEGIN SafetyTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  SafetyTask_Run(argument);
   /* USER CODE END SafetyTask */
 }
 
@@ -200,11 +266,7 @@ void StartSafetyTask(void *argument)
 void StartHostMgmtTask(void *argument)
 {
   /* USER CODE BEGIN HostMgmtTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  HostMgmtTask_Run(argument);
   /* USER CODE END HostMgmtTask */
 }
 
@@ -218,11 +280,7 @@ void StartHostMgmtTask(void *argument)
 void StartLaserApcTask(void *argument)
 {
   /* USER CODE BEGIN LaserApcTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  LaserTask_Run(argument);
   /* USER CODE END LaserApcTask */
 }
 
@@ -236,11 +294,7 @@ void StartLaserApcTask(void *argument)
 void StartThermalTecTask(void *argument)
 {
   /* USER CODE BEGIN ThermalTecTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  ThermalTask_Run(argument);
   /* USER CODE END ThermalTecTask */
 }
 
@@ -254,11 +308,7 @@ void StartThermalTecTask(void *argument)
 void StartSupervisionDDMTask(void *argument)
 {
   /* USER CODE BEGIN SupervisionDDMTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  SupervisionTask_Run(argument);
   /* USER CODE END SupervisionDDMTask */
 }
 
@@ -272,12 +322,22 @@ void StartSupervisionDDMTask(void *argument)
 void StorageTask (void *argument)
 {
   /* USER CODE BEGIN StorageTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  StorageTask_Run(argument);
   /* USER CODE END StorageTask */
+}
+
+/* USER CODE BEGIN Header_StartTask08 */
+/**
+* @brief Function implementing the MsmTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask08 */
+void StartTask08(void *argument)
+{
+  /* USER CODE BEGIN MsmTask */
+  MsmTask_Run(argument);
+  /* USER CODE END MsmTask */
 }
 
 /* Private application code --------------------------------------------------*/

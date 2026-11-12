@@ -61,6 +61,13 @@ extern osThreadId_t LaserApcTaskHandle;
 extern osThreadId_t ThermalTecTaskHandle;
 extern osThreadId_t SupervisionDDMTaskHandle;
 extern osThreadId_t StorageTaskHandle;
+extern osThreadId_t MsmTaskHandle;
+extern osMessageQueueId_t HostCmdMsgQueueHandle;
+extern osMessageQueueId_t LaserMsgQueueHandle;
+extern osMessageQueueId_t TecMsgQueueHandle;
+extern osMessageQueueId_t ControlResultMsgHandle;
+extern osMessageQueueId_t StorageCmdMsgQueueHandle;
+extern osMessageQueueId_t MsmMsgQueueHandle;
 
 /* Exported function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -74,6 +81,7 @@ void StartLaserApcTask(void *argument);
 void StartThermalTecTask(void *argument);
 void StartSupervisionDDMTask(void *argument);
 void StorageTask (void *argument);
+void StartTask08(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 

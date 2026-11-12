@@ -1,7 +1,7 @@
 
 # STM32CubeIDE build output
-Debug/
-Release/
+/Debug/
+/Release/
 
 # Compiler intermediate files
 *.o
