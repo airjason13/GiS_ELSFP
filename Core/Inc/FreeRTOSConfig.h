@@ -172,6 +172,10 @@ header file. */
 #define SysTick_Handler xPortSysTickHandler
 
 /* USER CODE BEGIN Defines */
+/* Check stack bounds and guard pattern; preserve across CubeMX generation. */
+#undef configCHECK_FOR_STACK_OVERFLOW
+#define configCHECK_FOR_STACK_OVERFLOW 2
+
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
 /* USER CODE END Defines */
 

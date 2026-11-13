@@ -67,6 +67,8 @@
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/"/>
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/CMSIS/RTOS2/Include/"/>
 									<listOptionValue builtIn="false" value="../App/Common"/>
+									<listOptionValue builtIn="false" value="../App/Services/Communication"/>
+									<listOptionValue builtIn="false" value="../App/Task"/>
 									<listOptionValue builtIn="false" value="../App/Task/Debug"/>
 									<listOptionValue builtIn="false" value="../App/Task/Safety"/>
 									<listOptionValue builtIn="false" value="../App/Task/HostManagement"/>
@@ -75,7 +77,7 @@
 									<listOptionValue builtIn="false" value="../App/Task/Supervision"/>
 									<listOptionValue builtIn="false" value="../App/Task/Storage"/>
 									<listOptionValue builtIn="false" value="../App/Platform/Inc"/>
-									<listOptionValue builtIn="false" value="../App/Shared"/>
+									<listOptionValue builtIn="false" value="../App/Services/SharedData"/>
 									<listOptionValue builtIn="false" value="../App/Task/MSM"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.842810812" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
@@ -174,6 +176,8 @@
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/"/>
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/CMSIS/RTOS2/Include/"/>
 									<listOptionValue builtIn="false" value="../App/Common"/>
+									<listOptionValue builtIn="false" value="../App/Services/Communication"/>
+									<listOptionValue builtIn="false" value="../App/Task"/>
 									<listOptionValue builtIn="false" value="../App/Task/Debug"/>
 									<listOptionValue builtIn="false" value="../App/Task/Safety"/>
 									<listOptionValue builtIn="false" value="../App/Task/HostManagement"/>
@@ -182,7 +186,7 @@
 									<listOptionValue builtIn="false" value="../App/Task/Supervision"/>
 									<listOptionValue builtIn="false" value="../App/Task/Storage"/>
 									<listOptionValue builtIn="false" value="../App/Platform/Inc"/>
-									<listOptionValue builtIn="false" value="../App/Shared"/>
+									<listOptionValue builtIn="false" value="../App/Services/SharedData"/>
 									<listOptionValue builtIn="false" value="../App/Task/MSM"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1438160127" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>

@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+/* Internal normalized commands, not CMIS wire opcodes. */
+enum { APP_CMD_LASER_PING = 0x7001, APP_CMD_MSM_PUBLISH = 0x7002 };
+enum { APP_RESULT_OK = 0, APP_RESULT_UNSUPPORTED = -1,
+       APP_RESULT_BUSY = -2, APP_RESULT_TIMEOUT = -3, APP_RESULT_INVALID = -4 };
+
 /* Internal task messages; not a wire-format representation of CMIS. */
 typedef struct {
     uint32_t request_id;

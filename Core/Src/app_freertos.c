@@ -60,7 +60,7 @@ osThreadId_t SysdebugTaskHandle;
 const osThreadAttr_t SysdebugTask_attributes = {
   .name = "SysdebugTask",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
+  .stack_size = 256 * 4
 };
 /* Definitions for SafetyTask */
 osThreadId_t SafetyTaskHandle;
@@ -216,7 +216,11 @@ void MX_FREERTOS_Init(void) {
   MsmTaskHandle = osThreadNew(StartTask08, NULL, &MsmTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  if ((MsmTaskHandle == NULL) || (MsmMsgQueueHandle == NULL))
+  if ((MsmTaskHandle == NULL) || (MsmMsgQueueHandle == NULL) ||
+      (HostMgmtTaskHandle == NULL) || (LaserApcTaskHandle == NULL) ||
+      (ThermalTecTaskHandle == NULL) || (SupervisionDDMTaskHandle == NULL) ||
+      (SafetyTaskHandle == NULL) || (StorageTaskHandle == NULL) ||
+      (SysdebugTaskHandle == NULL))
   {
     Error_Handler();
   }

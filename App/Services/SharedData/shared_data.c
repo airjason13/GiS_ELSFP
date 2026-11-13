@@ -85,3 +85,22 @@ bool SharedData_ClearFault(uint32_t bits, uint32_t sample_tick)
 {
     return UpdateFault(bits, sample_tick, true);
 }
+
+bool SharedData_UpdateTask(AppTaskId_t owner, const TaskSharedStatus_t *value)
+{
+    if ((unsigned)owner >= APP_TASK_COUNT || value == NULL ||
+        !PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.task[owner] = *value;
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}
+
+bool SharedData_UpdateCommandResult(AppTaskId_t owner, const ControlResultMsg_t *result)
+{
+    if ((unsigned)owner >= APP_TASK_COUNT || result == NULL ||
+        !PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.result[owner].message = *result;
+    shared.result[owner].valid = true;
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}

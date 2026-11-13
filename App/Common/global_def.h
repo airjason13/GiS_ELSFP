@@ -18,5 +18,7 @@
 #include "shared_data.h"
 #include "shared_data_service.h"
 #include "platform_log.h"
+#include "app_events.h"
+#include "task_runtime.h"
 
 #endif /* APP_GLOBAL_DEF_H */
