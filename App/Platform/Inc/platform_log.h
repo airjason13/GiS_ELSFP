@@ -18,6 +18,8 @@ extern "C" {
 /* Call once during startup, after kernel initialization and before tasks run.
  * Returns 0 on success, -1 on failure. Disabled logging is a successful no-op. */
 int PlatformLog_Init(void);
+/* Task-only character output, serialized with debug_printf; follows log switch. */
+int send_char(char ch);
 
 /* Synchronous task-only output. May block waiting for the mutex and UART.
  * Returns the formatted character count, or a negative value on failure.

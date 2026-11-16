@@ -3,8 +3,10 @@
 #endif
 
 #include "debug_task.h"
+#include "command_parser.h"
 #include "global_def.h"
 #include "platform_rtos.h"
+#include "platform_uart_irq.h"
 #include "app_freertos.h"
 
 /* Early warning only; tune using worst-case workload measurements. */
@@ -75,13 +77,82 @@ static void Debug_SystemStatus(const SharedSnapshot_t *snapshot, uint32_t now)
 #endif
 }
 
+#if DEBUG_UART_RX_ENABLE
+static void Debug_UartReceive(void)
+{
+    static char line[COMMAND_LINE_MAX + 1U]; /* 64 payload bytes plus NUL. */
+    static unsigned length;
+    static bool discard;
+    static bool previous_cr;
+    PlatformUartIrq_Service();
+    /* Bounded work so a continuous sender cannot monopolize the task. */
+    for (unsigned i=0U; i<COMMAND_LINE_MAX; ++i) {
+        uint8_t byte;
+        int result=PlatformUartIrq_ReadByte(&byte);
+        if (result==0) { break; }
+        if (result<0) {
+            length=0U;
+            discard=true;
+            previous_cr=false;
+            debug_printf("[UART RX] data lost; discard until newline\r\n");
+            continue;
+        }
+        if (byte=='\n' && previous_cr) {
+            previous_cr=false;
+            continue; /* CRLF is one line ending. */
+        }
+        previous_cr=(byte=='\r');
+        if (byte=='\r' || byte=='\n') {
+            (void)send_char('\r');
+            (void)send_char('\n');
+            if (!discard && length!=0U) {
+                line[length]='\0';
+                CommandParser_Parse(line);
+            }
+            length=0U;
+            discard=false;
+        } else if (!discard) {
+            if (byte==8U || byte==127U) {
+                if (length!=0U) {
+                    --length;
+                    (void)send_char('\b');
+                    (void)send_char(' ');
+                    (void)send_char('\b');
+                }
+            } else if (byte>=32U && byte<=126U) {
+                if (length<sizeof(line)-1U) {
+                    line[length++]=(char)byte;
+                    (void)send_char((char)byte);
+                }
+                else {
+                    length=0U;
+                    discard=true;
+                    //debug_printf("[UART RX] line too long (max 64); discarded\r\n");
+                }
+            } else {
+                length=0U;
+                discard=true;
+                //debug_printf("[UART RX] unsupported character; line discarded\r\n");
+            }
+        }
+    }
+}
+#endif
+
 void DebugTask_Run(void *argument)
 {
     (void)argument;
     static AppTaskRuntime_t ctx;
+#if DEBUG_UART_RX_ENABLE
+    const bool uart_ready=PlatformUartIrq_Start();
+    //debug_printf("[UART RX] %s\r\n",uart_ready ? "USART2 ready; type text then Enter" : "start failed");
+#endif
     uint32_t last_print = osKernelGetTickCount();
     bool first = true;
     for (;;) {
+#if DEBUG_UART_RX_ENABLE
+        if (uart_ready) { Debug_UartReceive(); }
+#endif
         const bool have_snapshot = AppTask_ReadSnapshot(&ctx);
         const uint32_t now = osKernelGetTickCount();
         if (have_snapshot) {
@@ -100,6 +171,10 @@ void DebugTask_Run(void *argument)
         }
         AppTask_PublishStatus(&ctx, APP_TASK_DEBUG);
         /* Event wakeups do not change the periodic system-info interval. */
+        #if DEBUG_UART_RX_ENABLE
+        AppTask_WaitEvents(&ctx, APP_EVT_MODULE, 10U); /* Responsive RX echo. */
+#else
         AppTask_WaitEvents(&ctx, APP_EVT_MODULE, 100U);
+#endif
     }
 }

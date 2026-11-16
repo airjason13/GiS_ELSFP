@@ -58,3 +58,8 @@ int PlatformLog_Init(void)
     return 0; /* No logging mutex is needed when output is disabled. */
 }
 #endif /* PLATFORM_LOG_ENABLE */
+
+int send_char(char ch)
+{
+    return debug_printf("%c", (unsigned char)ch);
+}

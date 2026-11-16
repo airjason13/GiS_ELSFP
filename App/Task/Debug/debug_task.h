@@ -6,6 +6,11 @@
 #define DEBUG_SYS_INFO 0
 #endif
 
+/* Receive UART characters, echo and parse complete command lines. */
+#ifndef DEBUG_UART_RX_ENABLE
+#define DEBUG_UART_RX_ENABLE 1
+#endif
+
 /* Runs in the existing CubeMX-created task; does not return. */
 void DebugTask_Run(void *argument);
 
