@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "task_ids.h"
-#include "messages_queue.h"
+#include "app_msg_types.h"
 
 typedef enum { SHARED_POWER_UNKNOWN=0, SHARED_POWER_LOW, SHARED_POWER_HIGH } SharedPower_t;
 typedef struct {
@@ -13,6 +13,17 @@ typedef struct {
     uint32_t sample_tick;
     bool valid;
 } ModuleStatus_t;
+/* Requested configuration; does not indicate actual hardware state. */
+typedef struct {
+    bool enable;
+    bool valid; /* Enable configured. */
+    int32_t bias_uA;
+    int32_t power_uW;
+    bool apc;
+    bool bias_valid;
+    bool power_valid;
+    bool apc_valid;
+} LaserControl_t;
 typedef struct {
     int32_t bias_uA;
     int32_t optical_power_uW;
@@ -56,6 +67,7 @@ typedef struct {
     TaskSharedStatus_t task[APP_TASK_COUNT];
     ModuleStatus_t module;
     LaserTelemetry_t laser;
+    LaserControl_t laser_control;
     TecTelemetry_t tec;
     AlarmStatus_t alarm;
     FaultStatus_t fault;
@@ -76,6 +88,11 @@ bool SharedData_UpdateCommandResult(AppTaskId_t owner, const ControlResultMsg_t 
 bool SharedData_UpdateTask(AppTaskId_t owner, const TaskSharedStatus_t *value);
 bool SharedData_UpdateModule(const ModuleStatus_t *value);
 bool SharedData_UpdateLaser(const LaserTelemetry_t *value);
+/* Laser Task only: atomic configuration field updates after queue dispatch. */
+bool SharedData_SetLaserEnable(bool enable);
+bool SharedData_SetLaserBias(int32_t bias_uA);
+bool SharedData_SetLaserPower(int32_t power_uW);
+bool SharedData_SetLaserApc(bool enable);
 bool SharedData_UpdateTec(const TecTelemetry_t *value);
 bool SharedData_UpdateAlarm(const AlarmStatus_t *value);
 bool SharedData_GetSnapshot(SharedSnapshot_t *snapshot);

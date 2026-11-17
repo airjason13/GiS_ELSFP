@@ -14,7 +14,7 @@
 /* Current RTOS interface and application message definitions.
  * Keep STM32 HAL and peripheral handles in the Platform implementation. */
 #include "cmsis_os2.h"
-#include "messages_queue.h"
+#include "app_msg_types.h"
 #include "shared_data.h"
 #include "shared_data_service.h"
 #include "platform_log.h"

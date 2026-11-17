@@ -2,12 +2,12 @@
 #include "global_def.h"
 #include "module_msm.h"
 #include "msm_port.h"
-#include "app_commands.h"
+#include "app_msg.h"
 #include "app_freertos.h"
 
 /* Set to 0 to disable MSM diagnostics without changing state-machine logic. */
 #ifndef MSM_DEBUG_ENABLE
-#define MSM_DEBUG_ENABLE 1
+#define MSM_DEBUG_ENABLE 0
 #endif
 
 void MsmTask_Run(void *argument)
@@ -92,7 +92,7 @@ void MsmTask_Run(void *argument)
             broadcast_pending=AppEvents_NotifyTargets(broadcast_pending, APP_EVT_MODULE);
             if (broadcast_pending != 0U) { ++ctx.status.failures; }
         }
-        if (request_active && reply_ready && broadcast_pending==0U && AppCommands_SendResult(&reply)) {
+        if (request_active && reply_ready && broadcast_pending==0U && AppMsg_SendResult(&reply)) {
             request_active=false;
             reply_ready=false;
         }

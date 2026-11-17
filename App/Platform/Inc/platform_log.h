@@ -1,6 +1,15 @@
 #ifndef PLATFORM_LOG_H
 #define PLATFORM_LOG_H
 
+/* Cmd UART TX: 0 = mute debug_printf/send_char, 1 = enable output.
+ * RX and command execution remain active. Rebuild after changing. */
+#ifndef CMD_UART_TX_ENABLE
+#define CMD_UART_TX_ENABLE 1
+#endif
+#if (CMD_UART_TX_ENABLE != 0) && (CMD_UART_TX_ENABLE != 1)
+#error "CMD_UART_TX_ENABLE must be 0 or 1"
+#endif
+
 /* 1: enable debug output; 0: compile out output and argument evaluation.
  * Apply consistently to the whole project; rebuild after changing it. */
 #ifndef PLATFORM_LOG_ENABLE
@@ -31,7 +40,7 @@ __attribute__((format(printf, 1, 2)))
 #endif
 int PlatformLog_Printf(const char *format, ...);
 
-#if PLATFORM_LOG_ENABLE
+#if PLATFORM_LOG_ENABLE && CMD_UART_TX_ENABLE
 #define debug_printf(...) PlatformLog_Printf(__VA_ARGS__)
 #else
 /* Unreachable branch preserves format checking and variable references,

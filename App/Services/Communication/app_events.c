@@ -10,7 +10,7 @@ static PlatformEventTarget_t target_handle(AppTaskId_t target)
     case APP_TASK_DDM: return SupervisionDDMTaskHandle;
     case APP_TASK_SAFETY: return SafetyTaskHandle;
     case APP_TASK_STORAGE: return StorageTaskHandle;
-    case APP_TASK_DEBUG: return SysdebugTaskHandle;
+    case APP_TASK_CMD: return CmdHandleTaskHandle;
     default: return NULL;
     }
 }

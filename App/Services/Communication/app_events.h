@@ -7,9 +7,11 @@
 #define HOST_EVT_RESULT    (1UL << 1)
 #define HOST_EVT_STATUS    (1UL << 2)
 #define HOST_EVT_FAULT     (1UL << 3)
+
 #define APP_EVT_MODULE     (1UL << 4)
 #define APP_EVT_COMMAND    (1UL << 6)
 #define MSM_EVT_INPUT      (1UL << 5)
+
 #define HOST_EVT_ALL (HOST_EVT_CMD | HOST_EVT_RESULT | HOST_EVT_STATUS | HOST_EVT_FAULT | APP_EVT_MODULE)
 #define MSM_EVT_ALL (APP_EVT_MODULE | MSM_EVT_INPUT | HOST_EVT_FAULT)
 #define APP_TASK_BIT(id) (1UL << (id))

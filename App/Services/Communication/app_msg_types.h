@@ -1,17 +1,29 @@
-#ifndef APP_MESSAGES_QUEUE_H
-#define APP_MESSAGES_QUEUE_H
+#ifndef APP_MSG_TYPES_H
+#define APP_MSG_TYPES_H
 
 #include <stdint.h>
 
 /* Internal normalized commands, not CMIS wire opcodes. */
-enum { APP_CMD_LASER_PING = 0x7001, APP_CMD_MSM_PUBLISH = 0x7002 };
-enum { APP_RESULT_OK = 0, APP_RESULT_UNSUPPORTED = -1,
-       APP_RESULT_BUSY = -2, APP_RESULT_TIMEOUT = -3, APP_RESULT_INVALID = -4 };
+typedef enum {
+    APP_CMD_MSM_PUBLISH  = 0x7002,
+    APP_CMD_LASER_ENABLE = 0x7010,
+    APP_CMD_LASER_BIAS   = 0x7011,
+    APP_CMD_LASER_POWER  = 0x7012,
+    APP_CMD_LASER_APC    = 0x7013
+} AppOpcode_t;
+/* STORED means configuration saved only, not hardware completion. */
+enum { APP_RESULT_STORED      =  1,
+	   APP_RESULT_OK          =  0,
+	   APP_RESULT_UNSUPPORTED = -1,
+       APP_RESULT_BUSY        = -2,
+	   APP_RESULT_TIMEOUT     = -3,
+	   APP_RESULT_INVALID     = -4
+};
 
 /* Internal task messages; not a wire-format representation of CMIS. */
 typedef struct {
     uint32_t request_id;
-    uint16_t opcode;
+    uint16_t opcode; /* AppOpcode_t value; fixed width preserves queue item size. */
     uint16_t source;
 } MsgHeader_t;
 
@@ -70,4 +82,4 @@ static_assert(sizeof(MsmMsg_t) == 24U, "Unexpected MsmMsg_t size");
 _Static_assert(sizeof(MsmMsg_t) == 24U, "Unexpected MsmMsg_t size");
 #endif
 
-#endif /* APP_MESSAGES_QUEUE_H */
+#endif /* APP_MSG_TYPES_H */

@@ -54,7 +54,7 @@ extern "C" {
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
-extern osThreadId_t SysdebugTaskHandle;
+extern osThreadId_t CmdHandleTaskHandle;
 extern osThreadId_t SafetyTaskHandle;
 extern osThreadId_t HostMgmtTaskHandle;
 extern osThreadId_t LaserApcTaskHandle;
@@ -62,10 +62,10 @@ extern osThreadId_t ThermalTecTaskHandle;
 extern osThreadId_t SupervisionDDMTaskHandle;
 extern osThreadId_t StorageTaskHandle;
 extern osThreadId_t MsmTaskHandle;
-extern osMessageQueueId_t HostCmdMsgQueueHandle;
-extern osMessageQueueId_t LaserMsgQueueHandle;
+extern osMessageQueueId_t HostRequestQueueHandle;
+extern osMessageQueueId_t LaserRequestQueueHandle;
 extern osMessageQueueId_t TecMsgQueueHandle;
-extern osMessageQueueId_t ControlResultMsgHandle;
+extern osMessageQueueId_t WorkerResultQueueHandle;
 extern osMessageQueueId_t StorageCmdMsgQueueHandle;
 extern osMessageQueueId_t MsmMsgQueueHandle;
 
@@ -74,7 +74,7 @@ extern osMessageQueueId_t MsmMsgQueueHandle;
 
 /* USER CODE END FunctionPrototypes */
 
-void StartSysdebugTask(void *argument);
+void CmdHandleTask(void *argument);
 void StartSafetyTask(void *argument);
 void StartHostMgmtTask(void *argument);
 void StartLaserApcTask(void *argument);

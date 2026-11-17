@@ -1,5 +1,5 @@
 #include "platform_log.h"
-#if PLATFORM_LOG_ENABLE
+#if PLATFORM_LOG_ENABLE && CMD_UART_TX_ENABLE
 #include "cmsis_os2.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -53,6 +53,12 @@ int PlatformLog_Printf(const char *format, ...)
 }
 
 #else
+int PlatformLog_Printf(const char *format, ...)
+{
+    (void)format;
+    return 0;
+}
+
 int PlatformLog_Init(void)
 {
     return 0; /* No logging mutex is needed when output is disabled. */

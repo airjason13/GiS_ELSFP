@@ -24,8 +24,8 @@
 /* USER CODE BEGIN Includes */
 #include "platform_log.h"
 #include "shared_data.h"
-#include "messages_queue.h"
-#include "debug_task.h"
+#include "app_msg_types.h"
+#include "cmd_task.h"
 #include "safety_task.h"
 #include "host_task.h"
 #include "msm_task.h"
@@ -55,10 +55,10 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for SysdebugTask */
-osThreadId_t SysdebugTaskHandle;
-const osThreadAttr_t SysdebugTask_attributes = {
-  .name = "SysdebugTask",
+/* Definitions for CmdHandleTask */
+osThreadId_t CmdHandleTaskHandle;
+const osThreadAttr_t CmdHandleTask_attributes = {
+  .name = "CmdHandleTask",
   .priority = (osPriority_t) osPriorityLow,
   .stack_size = 256 * 4
 };
@@ -111,25 +111,25 @@ const osThreadAttr_t MsmTask_attributes = {
   .priority = (osPriority_t) osPriorityHigh,
   .stack_size = 256 * 4
 };
-/* Definitions for HostCmdMsgQueue */
-osMessageQueueId_t HostCmdMsgQueueHandle;
-const osMessageQueueAttr_t HostCmdMsgQueue_attributes = {
-  .name = "HostCmdMsgQueue"
+/* Definitions for HostRequestQueue */
+osMessageQueueId_t HostRequestQueueHandle;
+const osMessageQueueAttr_t HostRequestQueue_attributes = {
+  .name = "HostRequestQueue"
 };
-/* Definitions for LaserMsgQueue */
-osMessageQueueId_t LaserMsgQueueHandle;
-const osMessageQueueAttr_t LaserMsgQueue_attributes = {
-  .name = "LaserMsgQueue"
+/* Definitions for LaserRequestQueue */
+osMessageQueueId_t LaserRequestQueueHandle;
+const osMessageQueueAttr_t LaserRequestQueue_attributes = {
+  .name = "LaserRequestQueue"
 };
 /* Definitions for TecMsgQueue */
 osMessageQueueId_t TecMsgQueueHandle;
 const osMessageQueueAttr_t TecMsgQueue_attributes = {
   .name = "TecMsgQueue"
 };
-/* Definitions for ControlResultMsg */
-osMessageQueueId_t ControlResultMsgHandle;
-const osMessageQueueAttr_t ControlResultMsg_attributes = {
-  .name = "ControlResultMsg"
+/* Definitions for WorkerResultQueue */
+osMessageQueueId_t WorkerResultQueueHandle;
+const osMessageQueueAttr_t WorkerResultQueue_attributes = {
+  .name = "WorkerResultQueue"
 };
 /* Definitions for StorageCmdMsgQueue */
 osMessageQueueId_t StorageCmdMsgQueueHandle;
@@ -175,14 +175,14 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
-  /* creation of HostCmdMsgQueue */
-  HostCmdMsgQueueHandle = osMessageQueueNew (32, sizeof(HostCmdMsg_t), &HostCmdMsgQueue_attributes);
-  /* creation of LaserMsgQueue */
-  LaserMsgQueueHandle = osMessageQueueNew (16, sizeof(LaserMsg_t), &LaserMsgQueue_attributes);
+  /* creation of HostRequestQueue */
+  HostRequestQueueHandle = osMessageQueueNew (32, sizeof(HostCmdMsg_t), &HostRequestQueue_attributes);
+  /* creation of LaserRequestQueue */
+  LaserRequestQueueHandle = osMessageQueueNew (16, sizeof(LaserMsg_t), &LaserRequestQueue_attributes);
   /* creation of TecMsgQueue */
   TecMsgQueueHandle = osMessageQueueNew (16, sizeof(TecMsg_t), &TecMsgQueue_attributes);
-  /* creation of ControlResultMsg */
-  ControlResultMsgHandle = osMessageQueueNew (16, sizeof(ControlResultMsg_t), &ControlResultMsg_attributes);
+  /* creation of WorkerResultQueue */
+  WorkerResultQueueHandle = osMessageQueueNew (16, sizeof(ControlResultMsg_t), &WorkerResultQueue_attributes);
   /* creation of StorageCmdMsgQueue */
   StorageCmdMsgQueueHandle = osMessageQueueNew (32, sizeof(StorageCmdMsg_t), &StorageCmdMsgQueue_attributes);
   /* creation of MsmMsgQueue */
@@ -191,8 +191,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
-  /* creation of SysdebugTask */
-  SysdebugTaskHandle = osThreadNew(StartSysdebugTask, NULL, &SysdebugTask_attributes);
+  /* creation of CmdHandleTask */
+  CmdHandleTaskHandle = osThreadNew(CmdHandleTask, NULL, &CmdHandleTask_attributes);
 
   /* creation of SafetyTask */
   SafetyTaskHandle = osThreadNew(StartSafetyTask, NULL, &SafetyTask_attributes);
@@ -220,7 +220,7 @@ void MX_FREERTOS_Init(void) {
       (HostMgmtTaskHandle == NULL) || (LaserApcTaskHandle == NULL) ||
       (ThermalTecTaskHandle == NULL) || (SupervisionDDMTaskHandle == NULL) ||
       (SafetyTaskHandle == NULL) || (StorageTaskHandle == NULL) ||
-      (SysdebugTaskHandle == NULL))
+      (CmdHandleTaskHandle == NULL))
   {
     Error_Handler();
   }
@@ -232,18 +232,18 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_EVENTS */
 
 }
-/* USER CODE BEGIN Header_StartSysdebugTask */
+/* USER CODE BEGIN Header_CmdHandleTask */
 /**
-* @brief Function implementing the SysdebugTask thread.
+* @brief Function implementing the CmdHandleTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartSysdebugTask */
-void StartSysdebugTask(void *argument)
+/* USER CODE END Header_CmdHandleTask */
+void CmdHandleTask(void *argument)
 {
-  /* USER CODE BEGIN SysdebugTask */
-  DebugTask_Run(argument);
-  /* USER CODE END SysdebugTask */
+  /* USER CODE BEGIN CmdHandleTask */
+  CmdTask_Run(argument);
+  /* USER CODE END CmdHandleTask */
 }
 
 /* USER CODE BEGIN Header_StartSafetyTask */

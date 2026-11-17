@@ -69,7 +69,7 @@
 									<listOptionValue builtIn="false" value="../App/Common"/>
 									<listOptionValue builtIn="false" value="../App/Services/Communication"/>
 									<listOptionValue builtIn="false" value="../App/Task"/>
-									<listOptionValue builtIn="false" value="../App/Task/Debug"/>
+									<listOptionValue builtIn="false" value="../App/Task/Cmd"/>
 									<listOptionValue builtIn="false" value="../App/Task/Safety"/>
 									<listOptionValue builtIn="false" value="../App/Task/HostManagement"/>
 									<listOptionValue builtIn="false" value="../App/Task/LaserAPC"/>
@@ -178,7 +178,7 @@
 									<listOptionValue builtIn="false" value="../App/Common"/>
 									<listOptionValue builtIn="false" value="../App/Services/Communication"/>
 									<listOptionValue builtIn="false" value="../App/Task"/>
-									<listOptionValue builtIn="false" value="../App/Task/Debug"/>
+									<listOptionValue builtIn="false" value="../App/Task/Cmd"/>
 									<listOptionValue builtIn="false" value="../App/Task/Safety"/>
 									<listOptionValue builtIn="false" value="../App/Task/HostManagement"/>
 									<listOptionValue builtIn="false" value="../App/Task/LaserAPC"/>

@@ -1,4 +1,4 @@
-#include "app_commands.h"
+#include "app_msg.h"
 #include "app_events.h"
 #include "app_freertos.h"
 static bool Send(osMessageQueueId_t queue, const void *message, uint32_t size,
@@ -9,15 +9,15 @@ static bool Send(osMessageQueueId_t queue, const void *message, uint32_t size,
     (void)AppEvents_Notify(target, event); /* Timed polling covers wakeup failure. */
     return true;
 }
-bool AppCommands_SendHost(const HostCmdMsg_t *c)
+bool AppMsg_SendHost(const HostCmdMsg_t *c)
 {
     return c != NULL && c->header.source < APP_TASK_COUNT &&
            c->length <= HOST_CMD_PAYLOAD_MAX &&
-           Send(HostCmdMsgQueueHandle,c,sizeof(*c),APP_TASK_HOST,HOST_EVT_CMD);
+           Send(HostRequestQueueHandle,c,sizeof(*c),APP_TASK_HOST,HOST_EVT_CMD);
 }
-bool AppCommands_SendLaser(const LaserMsg_t *c)
-{ return Send(LaserMsgQueueHandle,c,sizeof(*c),APP_TASK_LASER,APP_EVT_COMMAND); }
-bool AppCommands_SendMsm(const MsmMsg_t *c)
+bool AppMsg_SendLaser(const LaserMsg_t *c)
+{ return Send(LaserRequestQueueHandle,c,sizeof(*c),APP_TASK_LASER,APP_EVT_COMMAND); }
+bool AppMsg_SendMsm(const MsmMsg_t *c)
 { return Send(MsmMsgQueueHandle,c,sizeof(*c),APP_TASK_MSM,MSM_EVT_INPUT); }
-bool AppCommands_SendResult(const ControlResultMsg_t *r)
-{ return Send(ControlResultMsgHandle,r,sizeof(*r),APP_TASK_HOST,HOST_EVT_RESULT); }
+bool AppMsg_SendResult(const ControlResultMsg_t *r)
+{ return Send(WorkerResultQueueHandle,r,sizeof(*r),APP_TASK_HOST,HOST_EVT_RESULT); }

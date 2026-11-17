@@ -1,17 +1,18 @@
 #include "command_parser.h"
+#include "system_cmd.h"
+#include "elsfp_all_cmd.h"
+#include "msm_cmd.h"
+#include "laser_cmd.h"
 #include "platform_log.h"
-#include "shared_data.h"
-#include "module_msm.h"
-#include <inttypes.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
 #define COMMAND_ARGS_MAX 8U
 #define CMD_PATH_LENGTH 3U
-/* Single Debug Task caller; static storage avoids large stack allocations. */
+/* Single Cmd Task caller; static storage avoids large stack allocations. */
 static char command_buffer[COMMAND_LINE_MAX + 1U];
 static char *arguments[COMMAND_ARGS_MAX];
-static SharedSnapshot_t snapshot;
 
 /* Handlers receive only the value arguments after verb/target/field. */
 typedef void (*CmdHandler_t)(unsigned argc, char *const argv[]);
@@ -25,16 +26,29 @@ typedef struct {
     const char *description;
 } CmdEntry_t;
 
+static void Cmd_GetSystemStatus(unsigned argc, char *const argv[]);
 static void Cmd_GetElsfpStatus(unsigned argc, char *const argv[]);
 static void Cmd_GetMsmStatus(unsigned argc, char *const argv[]);
+
 
 /* Add one row + one handler. Dispatch and help both use this table.
  * For setters, value_count counts arguments AFTER the three-word path;
  * value_usage describes them, e.g. "<mW>". Validate values in the handler. */
 static const CmdEntry_t commands[] = {
+    /* ==================== System Monitor ==================== */
+    { "get", "system", "status", 0U, Cmd_GetSystemStatus, "", "Show all MCU status and stack watermarks" },
+
     /* Verb   Target   Field     Values  Handler             Value help  Description */
-    { "get", "elsfp", "status", 0U,     Cmd_GetElsfpStatus,  "",         "Show module, telemetry and faults" },
-    { "get", "msm",   "status", 0U,     Cmd_GetMsmStatus,    "",         "Show current module state" }
+    /* ==================== ELSFP Status ==================== */
+	{ "get", "elsfp", "status", 0U,     Cmd_GetElsfpStatus,  "",         "Show module, telemetry and faults" },
+    /* ===================== MSM Control ==================== */
+	{ "get", "msm",   "status", 0U,     Cmd_GetMsmStatus,    "",         "Show current module state" },
+    /* ===================== Laser Control ==================== */
+	{ "get", "laser", "status", 0U, LaserCmd_Status, "", "Show measured laser telemetry" },
+    { "set", "laser", "enable", 1U, LaserCmd_Enable, "<0|1>", "Store requested laser disable/enable" },
+    { "set", "laser", "bias", 1U, LaserCmd_Bias, "<uA>", "Store requested bias current" },
+    { "set", "laser", "power", 1U, LaserCmd_Power, "<uW>", "Store requested optical power target" },
+    { "set", "laser", "apc", 1U, LaserCmd_Apc, "<0|1>", "Store requested APC disable/enable" }
 };
 #define CMD_COUNT (sizeof(commands) / sizeof(commands[0]))
 
@@ -135,47 +149,25 @@ static void Dispatch(unsigned argc, char *const argv[])
     ShowHelp(2U,argv);
 }
 
-static bool ReadSnapshot(void)
+static void Cmd_GetSystemStatus(unsigned argc, char *const argv[])
 {
-    if (SharedData_GetSnapshot(&snapshot)) { return true; }
-    debug_printf("[CMD] shared data unavailable\r\n");
-    return false;
-}
-
-static void PrintModule(void)
-{
-    if (!snapshot.module.valid) {
-        debug_printf("[CMD] module: not published\r\n");
-        return;
-    }
-    debug_printf("[CMD] MSM=%s seq=%" PRIu32 " power=%u\r\n",
-                 ModuleMsm_StateName((MsmState_t)snapshot.module.state),
-                 snapshot.module.broadcast_sequence, (unsigned)snapshot.module.power);
+    (void)argc;
+    (void)argv;
+    SystemCmd_Status();
 }
 
 static void Cmd_GetElsfpStatus(unsigned argc, char *const argv[])
 {
     (void)argc;
     (void)argv;
-    if (!ReadSnapshot()) { return; }
-    PrintModule();
-    if (snapshot.laser.valid) {
-        debug_printf("[CMD] Laser: bias=%" PRId32 " uA power=%" PRId32 " uW\r\n",
-                     snapshot.laser.bias_uA, snapshot.laser.optical_power_uW);
-    } else { debug_printf("[CMD] Laser: not published\r\n"); }
-    if (snapshot.tec.valid) {
-        debug_printf("[CMD] TEC: temp=%" PRId32 " mdegC current=%" PRId32 " mA\r\n",
-                     snapshot.tec.temperature_mdegC, snapshot.tec.current_mA);
-    } else { debug_printf("[CMD] TEC: not published\r\n"); }
-    debug_printf("[CMD] Fault: valid=%u latched=0x%08" PRIX32 "\r\n",
-                 (unsigned)snapshot.fault.valid, snapshot.fault.latched_bits);
+    ElsfpAllCmd_Status();
 }
 
 static void Cmd_GetMsmStatus(unsigned argc, char *const argv[])
 {
     (void)argc;
     (void)argv;
-    if (ReadSnapshot()) { PrintModule(); }
+    MsmCmd_Status();
 }
 
 void CommandParser_Parse(const char *line)

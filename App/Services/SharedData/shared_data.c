@@ -104,3 +104,41 @@ bool SharedData_UpdateCommandResult(AppTaskId_t owner, const ControlResultMsg_t 
     ++shared.revision;
     return PlatformMutex_Unlock(shared_mutex);
 }
+
+bool SharedData_SetLaserEnable(bool enable)
+{
+    if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.laser_control.enable = enable;
+    shared.laser_control.valid = true;
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}
+
+bool SharedData_SetLaserBias(int32_t bias_uA)
+{
+    if (bias_uA < 0) { return false; }
+    if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.laser_control.bias_uA = bias_uA;
+    shared.laser_control.bias_valid = true;
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}
+
+bool SharedData_SetLaserPower(int32_t power_uW)
+{
+    if (power_uW < 0) { return false; }
+    if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.laser_control.power_uW = power_uW;
+    shared.laser_control.power_valid = true;
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}
+
+bool SharedData_SetLaserApc(bool enable)
+{
+    if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.laser_control.apc = enable;
+    shared.laser_control.apc_valid = true;
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}

@@ -1,6 +1,6 @@
 #include "host_task.h"
 #include "global_def.h"
-#include "cmis_commands.h"
+#include "dispatcher.h"
 
 void HostMgmtTask_Run(void *argument)
 {
@@ -8,7 +8,7 @@ void HostMgmtTask_Run(void *argument)
     static AppTaskRuntime_t ctx;
     uint32_t pending = 0U;
     for (;;) {
-        CmisCommands_ProcessQueues();
+        Dispatcher_Process();
         pending |= ctx.events;
         if (AppTask_ReadSnapshot(&ctx)) {
             /* Independent branches: multiple event bits may arrive together.
