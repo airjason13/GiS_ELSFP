@@ -37,6 +37,7 @@ static void Cmd_GetMsmStatus(unsigned argc, char *const argv[]);
 static const CmdEntry_t commands[] = {
     /* ==================== System Monitor ==================== */
     { "get", "system", "status", 0U, Cmd_GetSystemStatus, "", "Show all MCU status and stack watermarks" },
+    { "get", "system", "version", 0U, Cmd_GetSystemVersion, "", "Show firmware version and build ID" },
 
     /* Verb   Target   Field     Values  Handler             Value help  Description */
     /* ==================== ELSFP Status ==================== */

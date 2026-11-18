@@ -35,3 +35,6 @@ Thumbs.db
 
 # Debug Configuration
 *.launch
+
+# Generated firmware version
+/App/Common/build_version.h

@@ -5,6 +5,7 @@
 | 指令 | 用途 |
 | --- | --- |
 | `get system status` | 列印所有 Task工作狀態 與 Stack運行狀態 |
+| `get system version` | 顯示韌體版本 |
 | `help` | 列出指令分類 |
 | `help get` / `help set` | 列出查詢／設定對象 |
 | `help get system` | 顯示 Task 狀態查詢用法 |

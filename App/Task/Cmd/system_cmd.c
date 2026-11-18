@@ -1,4 +1,6 @@
 #include "system_cmd.h"
+#include "build_version.h"
+#include "firmware_version.h"
 #include "global_def.h"
 #include "platform_rtos.h"
 #include "app_freertos.h"
@@ -71,3 +73,12 @@ void SystemCmd_Status(void)
     debug_printf("=========================================================================================\r\n");
 }
 
+
+void Cmd_GetSystemVersion(unsigned argc, char *const argv[])
+{
+    (void)argc;
+    (void)argv;
+    debug_printf("[CMD] Firmware Version: %s\r\n", FIRMWARE_VERSION);
+    debug_printf("[CMD] Build ID: %s\r\n", FIRMWARE_BUILD_ID);
+    debug_printf("[CMD] Build Time: %s\r\n", FIRMWARE_BUILD_TIME);
+}
