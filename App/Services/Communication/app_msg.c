@@ -19,5 +19,6 @@ bool AppMsg_SendLaser(const LaserMsg_t *c)
 { return Send(LaserRequestQueueHandle,c,sizeof(*c),APP_TASK_LASER,APP_EVT_COMMAND); }
 bool AppMsg_SendMsm(const MsmMsg_t *c)
 { return Send(MsmMsgQueueHandle,c,sizeof(*c),APP_TASK_MSM,MSM_EVT_INPUT); }
+
 bool AppMsg_SendResult(const ControlResultMsg_t *r)
 { return Send(WorkerResultQueueHandle,r,sizeof(*r),APP_TASK_HOST,HOST_EVT_RESULT); }

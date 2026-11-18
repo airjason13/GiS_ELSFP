@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define LASER_LANE_COUNT 8U
+#define LASER_LANE_ALL 0xFFU
+
 /* Internal normalized commands, not CMIS wire opcodes. */
 typedef enum {
     APP_CMD_MSM_PUBLISH  = 0x7002,
@@ -36,6 +39,7 @@ typedef struct {
     uint8_t page;
     uint8_t offset;
     uint8_t length;
+    uint8_t lane_mask; /* Bit 0 = Lane 1; laser requests must be nonzero. */
     uint8_t data[HOST_CMD_PAYLOAD_MAX];
 } HostCmdMsg_t;
 
@@ -43,6 +47,7 @@ typedef struct {
     MsgHeader_t header;
     /* Meaning, units and range are defined by the command opcode. */
     int32_t target;
+    uint8_t lane_mask;
 } LaserMsg_t;
 
 typedef struct {
@@ -54,6 +59,9 @@ typedef struct {
     MsgHeader_t header;
     int32_t status;
     int32_t detail;
+    uint8_t requested_mask;
+    uint8_t success_mask; /* Stored lanes for APP_RESULT_STORED, not HW applied. */
+    uint8_t failed_mask; /* Zero on timeout: outcome is unknown. */
 } ControlResultMsg_t;
 
 typedef struct {

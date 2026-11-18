@@ -25,12 +25,12 @@ bool SharedData_UpdateModule(const ModuleStatus_t *value)
     return PlatformMutex_Unlock(shared_mutex);
 }
 
-bool SharedData_UpdateLaser(const LaserTelemetry_t *value)
+bool SharedData_UpdateLaserMeasured(uint8_t lane, const LaserTelemetry_t *value)
 {
-    if (value == NULL || !PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) {
+    if (lane >= LASER_LANE_COUNT || value == NULL || !PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) {
         return false;
     }
-    shared.laser = *value;
+    shared.laser[lane].measured = *value;
     ++shared.revision;
     return PlatformMutex_Unlock(shared_mutex);
 }
@@ -105,40 +105,73 @@ bool SharedData_UpdateCommandResult(AppTaskId_t owner, const ControlResultMsg_t 
     return PlatformMutex_Unlock(shared_mutex);
 }
 
-bool SharedData_SetLaserEnable(bool enable)
+bool SharedData_SetLaserRequestedEnable(uint8_t lane_mask, bool enable)
 {
+    if (lane_mask==0U) { return false; }
     if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
-    shared.laser_control.enable = enable;
-    shared.laser_control.valid = true;
+    /* Update every selected lane under one lock. */
+    for (unsigned lane=0; lane<LASER_LANE_COUNT; ++lane) {
+        if ((lane_mask & (1U<<lane))==0U) { continue; }
+        shared.laser[lane].requested.enable=enable;
+    }
     ++shared.revision;
     return PlatformMutex_Unlock(shared_mutex);
 }
 
-bool SharedData_SetLaserBias(int32_t bias_uA)
+bool SharedData_SetLaserRequestedBias(uint8_t lane_mask, int32_t bias_uA)
 {
-    if (bias_uA < 0) { return false; }
+    if (lane_mask==0U || bias_uA<0) { return false; }
     if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
-    shared.laser_control.bias_uA = bias_uA;
-    shared.laser_control.bias_valid = true;
+    /* Update every selected lane under one lock. */
+    for (unsigned lane=0; lane<LASER_LANE_COUNT; ++lane) {
+        if ((lane_mask & (1U<<lane))==0U) { continue; }
+        shared.laser[lane].requested.bias_uA=bias_uA;
+        shared.laser[lane].requested.bias_valid=true;
+    }
     ++shared.revision;
     return PlatformMutex_Unlock(shared_mutex);
 }
 
-bool SharedData_SetLaserPower(int32_t power_uW)
+bool SharedData_SetLaserRequestedPower(uint8_t lane_mask, int32_t power_uW)
 {
-    if (power_uW < 0) { return false; }
+    if (lane_mask==0U || power_uW<0) { return false; }
     if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
-    shared.laser_control.power_uW = power_uW;
-    shared.laser_control.power_valid = true;
+    /* Update every selected lane under one lock. */
+    for (unsigned lane=0; lane<LASER_LANE_COUNT; ++lane) {
+        if ((lane_mask & (1U<<lane))==0U) { continue; }
+        shared.laser[lane].requested.power_uW=power_uW;
+        shared.laser[lane].requested.power_valid=true;
+    }
     ++shared.revision;
     return PlatformMutex_Unlock(shared_mutex);
 }
 
-bool SharedData_SetLaserApc(bool enable)
+bool SharedData_SetLaserRequestedApc(uint8_t lane_mask, bool enable)
 {
+    if (lane_mask==0U) { return false; }
     if (!PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
-    shared.laser_control.apc = enable;
-    shared.laser_control.apc_valid = true;
+    /* Update every selected lane under one lock. */
+    for (unsigned lane=0; lane<LASER_LANE_COUNT; ++lane) {
+        if ((lane_mask & (1U<<lane))==0U) { continue; }
+        shared.laser[lane].requested.apc=enable;
+        shared.laser[lane].requested.apc_valid=true;
+    }
+    ++shared.revision;
+    return PlatformMutex_Unlock(shared_mutex);
+}
+
+bool SharedData_GetLaserLane(uint8_t lane, LaserLaneData_t *value)
+{
+    if (lane>=LASER_LANE_COUNT || value==NULL ||
+        !PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    *value=shared.laser[lane];
+    return PlatformMutex_Unlock(shared_mutex);
+}
+bool SharedData_UpdateLaserActual(uint8_t lane, const LaserStatus_t *value)
+{
+    if (lane>=LASER_LANE_COUNT || value==NULL ||
+        !PlatformMutex_Lock(shared_mutex, SHARED_LOCK_TIMEOUT_MS)) { return false; }
+    shared.laser[lane].actual=*value;
     ++shared.revision;
     return PlatformMutex_Unlock(shared_mutex);
 }

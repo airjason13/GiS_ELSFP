@@ -32,7 +32,8 @@ static bool DecodeTarget(const HostCmdMsg_t *command, int32_t maximum,
 static bool SendLaserSetting(const HostCmdMsg_t *command, int32_t maximum,
                                  int32_t *error)
 {
-    LaserMsg_t message={.header=command->header};
+    LaserMsg_t message={.header=command->header,.lane_mask=command->lane_mask};
+    if (message.lane_mask==0U) { *error=APP_RESULT_INVALID; return false; }
     if (!DecodeTarget(command,maximum,&message.target,error)) { return false; }
     *error=APP_RESULT_BUSY;
     return AppMsg_SendLaser(&message);
@@ -148,6 +149,8 @@ static void Host_ReceiveAndDispatchRequest(uint32_t now_tick)
     ctx.result=(ControlResultMsg_t){.header=ctx.request.header,.status=APP_RESULT_UNSUPPORTED};
     const bool accepted=Host_SendRequestToWorker(&ctx.request,&ctx.worker,&ctx.result.status);
     ctx.result.header.source=ctx.worker;
+    ctx.result.requested_mask=ctx.request.lane_mask;
+    if (!accepted) { ctx.result.failed_mask=ctx.request.lane_mask; }
     ctx.result_ready=!accepted;
     debug_printf("[HOST] dispatch id=0x%08" PRIX32 " op=0x%04X queued=%u\r\n",
                  ctx.request.header.request_id,(unsigned)ctx.request.header.opcode,(unsigned)accepted);

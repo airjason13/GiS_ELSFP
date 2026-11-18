@@ -4,15 +4,7 @@
 #include "platform_log.h"
 #include "shared_data.h"
 #include <inttypes.h>
-
-static SharedSnapshot_t snapshot;
-
-static bool ReadSnapshot(void)
-{
-    if (SharedData_GetSnapshot(&snapshot)) { return true; }
-    debug_printf("[CMD] shared data unavailable\r\n");
-    return false;
-}
+#include <string.h>
 
 /* Decimal integers only; range is storage capacity, not a hardware limit. */
 static bool ParseLaserValue(const char *text, uint32_t maximum, uint32_t *value)
@@ -30,36 +22,55 @@ static bool ParseLaserValue(const char *text, uint32_t maximum, uint32_t *value)
     return true;
 }
 
-void LaserCmd_Status(unsigned argc, char *const argv[])
+static bool ParseLanes(const char *text, uint8_t *mask)
 {
-    (void)argc; (void)argv;
-    if (!ReadSnapshot()) { return; }
-    if (snapshot.laser_control.valid) {
-        debug_printf("[CMD] Laser: requested enable=%u (hardware not applied)\r\n",
-                     (unsigned)snapshot.laser_control.enable);
-    } else { debug_printf("[CMD] Laser: enable not configured\r\n"); }
-    if (snapshot.laser_control.bias_valid) {
-        debug_printf("[CMD] Laser: requested bias=%" PRId32 " uA (hardware not applied)\r\n",
-                     (int32_t)snapshot.laser_control.bias_uA);
-    } else { debug_printf("[CMD] Laser: bias not configured\r\n"); }
-    if (snapshot.laser_control.power_valid) {
-        debug_printf("[CMD] Laser: requested power=%" PRId32 " uW (hardware not applied)\r\n",
-                     (int32_t)snapshot.laser_control.power_uW);
-    } else { debug_printf("[CMD] Laser: power not configured\r\n"); }
-    if (snapshot.laser_control.apc_valid) {
-        debug_printf("[CMD] Laser: requested apc=%" PRId32 "  (hardware not applied)\r\n",
-                     (int32_t)snapshot.laser_control.apc);
-    } else { debug_printf("[CMD] Laser: apc not configured\r\n"); }
-    if (!snapshot.laser.valid) {
-        debug_printf("[CMD] Laser: not published\r\n");
-        return;
+    if (strcmp(text,"all")==0) { *mask=LASER_LANE_ALL; return true; }
+    uint32_t lane;
+    if (!ParseLaserValue(text,LASER_LANE_COUNT,&lane) || lane==0U) {
+        debug_printf("[CMD] invalid lane: use 1..8 or all\r\n"); return false;
     }
-    debug_printf("[CMD] Laser: bias=%" PRId32 " uA power=%" PRId32 " uW\r\n",
-                 snapshot.laser.bias_uA,snapshot.laser.optical_power_uW);
+    *mask=(uint8_t)(1U<<(lane-1U));
+    return true;
+}
+
+void LaserCmd_PrintLane(uint8_t lane, const LaserLaneData_t *data)
+{
+    const LaserRequest_t *c=&data->requested;
+    debug_printf("[CMD] Laser Lane %u requested (hardware not applied):\r\n",(unsigned)lane+1U);
+    debug_printf("  enable=%u\r\n",(unsigned)c->enable);
+    if (c->bias_valid) { debug_printf("  bias=%" PRId32 " uA\r\n",c->bias_uA); }
+    else { debug_printf("  bias=not configured\r\n"); }
+    if (c->power_valid) { debug_printf("  power=%" PRId32 " uW\r\n",c->power_uW); }
+    else { debug_printf("  power=not configured\r\n"); }
+    if (c->apc_valid) { debug_printf("  apc=%u\r\n",(unsigned)c->apc); }
+    else { debug_printf("  apc=not configured\r\n"); }
+    if (data->actual.valid) {
+        debug_printf("  actual enabled=%u apc=%u\r\n",(unsigned)data->actual.enabled,(unsigned)data->actual.apc_active);
+    } else { debug_printf("  actual status: not published\r\n"); }
+    if (data->measured.valid) {
+        debug_printf("  measured bias=%" PRId32 " uA power=%" PRId32 " uW\r\n",
+                     data->measured.bias_uA,data->measured.optical_power_uW);
+    } else { debug_printf("  Laser: not published\r\n"); }
+}
+
+void Cmd_GetLaserStatus(unsigned argc, char *const argv[])
+{
+    (void)argc;
+    uint8_t mask;
+    if (!ParseLanes(argv[0],&mask)) { return; }
+    for (uint8_t lane=0; lane<LASER_LANE_COUNT; ++lane) {
+        if ((mask & (1U<<lane))==0U) { continue; }
+        LaserLaneData_t data;
+        if (!SharedData_GetLaserLane(lane,&data)) {
+            debug_printf("[CMD] shared data unavailable\r\n"); return;
+        }
+        LaserCmd_PrintLane(lane,&data);
+    }
 }
 
 typedef struct {
     AppOpcode_t opcode;
+    uint8_t lane_mask;
     int32_t value;
 } LaserSetting_t;
 
@@ -68,42 +79,44 @@ static bool SendLaserSetting(AppTaskId_t source, uint32_t id, const void *contex
 {
     const LaserSetting_t *setting=context;
     switch (setting->opcode) {
-    case APP_CMD_LASER_ENABLE: return LaserTask_SetEnable(setting->value!=0,source,id);
-    case APP_CMD_LASER_BIAS: return LaserTask_SetBias(setting->value,source,id);
-    case APP_CMD_LASER_POWER: return LaserTask_SetPower(setting->value,source,id);
-    case APP_CMD_LASER_APC: return LaserTask_SetApc(setting->value!=0,source,id);
+    case APP_CMD_LASER_ENABLE: return LaserTask_SetEnable(setting->lane_mask,setting->value!=0,source,id);
+    case APP_CMD_LASER_BIAS: return LaserTask_SetBias(setting->lane_mask,setting->value,source,id);
+    case APP_CMD_LASER_POWER: return LaserTask_SetPower(setting->lane_mask,setting->value,source,id);
+    case APP_CMD_LASER_APC: return LaserTask_SetApc(setting->lane_mask,setting->value!=0,source,id);
     default: return false;
     }
 }
 
-static void SubmitSetting(AppOpcode_t opcode, const char *field, const char *text, uint32_t maximum)
+static void SubmitSetting(AppOpcode_t opcode, const char *field, const char *lanes, const char *text, uint32_t maximum)
 {
+    uint8_t mask;
+    if (!ParseLanes(lanes,&mask)) { return; }
     uint32_t value;
     if (!ParseLaserValue(text,maximum,&value)) {
         debug_printf("[CMD] invalid laser %s: use decimal 0..%" PRIu32 "\r\n",field,maximum);
         return;
     }
-    const LaserSetting_t setting={.opcode=opcode,.value=(int32_t)value};
+    const LaserSetting_t setting={.opcode=opcode,.lane_mask=mask,.value=(int32_t)value};
     (void)CmdRequest_Send(opcode,SendLaserSetting,&setting);
 }
 
-void LaserCmd_Enable(unsigned argc, char *const argv[])
+void Cmd_SetLaserEnable(unsigned argc, char *const argv[])
 {
     (void)argc;
-    SubmitSetting(APP_CMD_LASER_ENABLE,"enable",argv[0],1U);
+    SubmitSetting(APP_CMD_LASER_ENABLE,"enable",argv[0],argv[1],1U);
 }
-void LaserCmd_Bias(unsigned argc, char *const argv[])
+void Cmd_SetLaserBias(unsigned argc, char *const argv[])
 {
     (void)argc;
-    SubmitSetting(APP_CMD_LASER_BIAS,"bias",argv[0],INT32_MAX);
+    SubmitSetting(APP_CMD_LASER_BIAS,"bias",argv[0],argv[1],INT32_MAX);
 }
-void LaserCmd_Power(unsigned argc, char *const argv[])
+void Cmd_SetLaserPower(unsigned argc, char *const argv[])
 {
     (void)argc;
-    SubmitSetting(APP_CMD_LASER_POWER,"power",argv[0],INT32_MAX);
+    SubmitSetting(APP_CMD_LASER_POWER,"power",argv[0],argv[1],INT32_MAX);
 }
-void LaserCmd_Apc(unsigned argc, char *const argv[])
+void Cmd_SetLaserApc(unsigned argc, char *const argv[])
 {
     (void)argc;
-    SubmitSetting(APP_CMD_LASER_APC,"apc",argv[0],1U);
+    SubmitSetting(APP_CMD_LASER_APC,"apc",argv[0],argv[1],1U);
 }

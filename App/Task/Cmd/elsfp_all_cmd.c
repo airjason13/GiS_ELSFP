@@ -1,4 +1,5 @@
 #include "elsfp_all_cmd.h"
+#include "laser_cmd.h"
 #include "platform_log.h"
 #include "shared_data.h"
 #include "module_msm.h"
@@ -28,26 +29,9 @@ void ElsfpAllCmd_Status(void)
 {
     if (!ReadSnapshot()) { return; }
     PrintModule();
-    if (snapshot.laser_control.valid) {
-        debug_printf("[CMD] Laser: requested enable=%u (hardware not applied)\r\n",
-                     (unsigned)snapshot.laser_control.enable);
+    for (uint8_t lane=0; lane<LASER_LANE_COUNT; ++lane) {
+        LaserCmd_PrintLane(lane,&snapshot.laser[lane]);
     }
-    if (snapshot.laser_control.bias_valid) {
-        debug_printf("[CMD] Laser: requested bias=%" PRId32 " uA (hardware not applied)\r\n",
-                     (int32_t)snapshot.laser_control.bias_uA);
-    } else { debug_printf("[CMD] Laser: bias not configured\r\n"); }
-    if (snapshot.laser_control.power_valid) {
-        debug_printf("[CMD] Laser: requested power=%" PRId32 " uW (hardware not applied)\r\n",
-                     (int32_t)snapshot.laser_control.power_uW);
-    } else { debug_printf("[CMD] Laser: power not configured\r\n"); }
-    if (snapshot.laser_control.apc_valid) {
-        debug_printf("[CMD] Laser: requested apc=%" PRId32 "  (hardware not applied)\r\n",
-                     (int32_t)snapshot.laser_control.apc);
-    } else { debug_printf("[CMD] Laser: apc not configured\r\n"); }
-    if (snapshot.laser.valid) {
-        debug_printf("[CMD] Laser: bias=%" PRId32 " uA power=%" PRId32 " uW\r\n",
-                     snapshot.laser.bias_uA, snapshot.laser.optical_power_uW);
-    } else { debug_printf("[CMD] Laser: not published\r\n"); }
     if (snapshot.tec.valid) {
         debug_printf("[CMD] TEC: temp=%" PRId32 " mdegC current=%" PRId32 " mA\r\n",
                      snapshot.tec.temperature_mdegC, snapshot.tec.current_mA);

@@ -18,7 +18,7 @@ bool SharedDataService_PublishTec(int32_t temperature_mdegC, int32_t current_mA,
 
 bool SharedDataService_PrintSnapshot(void)
 {
-    SharedSnapshot_t snapshot;
+    static SharedSnapshot_t snapshot;
     if (!SharedData_GetSnapshot(&snapshot)) {
         return false; /* Never consume an unsuccessful read. */
     }

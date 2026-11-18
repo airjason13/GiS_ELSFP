@@ -54,5 +54,10 @@ void CmdRequest_ProcessResult(void)
     }
     debug_printf("[CMD] result id=0x%08" PRIX32 " op=0x%04X status=%" PRId32 " %s\r\n",
                  pending_id,(unsigned)pending_opcode,result->message.status,state);
+    if (result->message.requested_mask!=0U) {
+        debug_printf("[CMD] lanes requested=0x%02X success=0x%02X failed=0x%02X\r\n",
+                     (unsigned)result->message.requested_mask,(unsigned)result->message.success_mask,
+                     (unsigned)result->message.failed_mask);
+    }
     pending=false;
 }

@@ -1,18 +1,22 @@
 # ELSFP 支援指令
 
+`<lane>` 可填 `1`～`8` 或 `all`。雷射指令必須明確指定Lane。
+
 | 指令 | 用途 |
 | --- | --- |
 | `get system status` | 列印所有 Task工作狀態 與 Stack運行狀態 |
 | `help` | 列出指令分類 |
-| `help get` | 列出可查詢的對象 |
-| `help get elsfp` | 查看 ELSFP 查詢指令 |
-| `help get msm` | 查看 MSM 查詢指令 |
-| `get elsfp status` | 查看模組狀態、Laser／TEC 資料及故障狀態 |
-| `get msm status` | 查看 MSM 狀態、廣播序號及電源模式 |
-| `help set laser` | 查看雷射調整指令 |
-| `get laser status` | 查看已發布的偏壓電流與光功率 |
-| `set laser enable <0或1>` | 寫入雷射停用／啟用要求（Shared Data） |
-| `set laser bias <uA>` | 寫入偏壓電流要求，單位 µA |
-| `set laser power <uW>` | 寫入光功率目標，單位 µW |
-| `set laser apc <0或1>` | 寫入 APC 停用／啟用要求 |
+| `help get` / `help set` | 列出查詢／設定對象 |
+| `help get system` | 顯示 Task 狀態查詢用法 |
+| `help get elsfp` | 顯示整體查詢用法 |
+| `help get msm` | 顯示 MSM 查詢用法 |
+| `help get laser` / `help set laser` | 顯示雷射指令用法 |
+| `get system status` | 查詢所有 Task 工作狀態與 Stack 最低剩餘空間 |
+| `get elsfp status` | 查詢模組、全部 8 Lane雷射、TEC 及故障資料 |
+| `get msm status` | 查詢 MSM 狀態、廣播序號及電源模式 |
+| `get laser <lane> status` | 查詢指定Lane的要求設定、實際狀態與量測資料 |
+| `set laser <lane> enable <0或1>` | 設定停用／啟用要求 |
+| `set laser <lane> bias <uA>` | 設定偏壓電流要求，單位 µA |
+| `set laser <lane> power <uW>` | 設定光功率目標，單位 µW |
+| `set laser <lane> apc <0或1>` | 設定 APC 停用／啟用要求 |
 

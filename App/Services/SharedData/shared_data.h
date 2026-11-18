@@ -15,21 +15,31 @@ typedef struct {
 } ModuleStatus_t;
 /* Requested configuration; does not indicate actual hardware state. */
 typedef struct {
-    bool enable;
-    bool valid; /* Enable configured. */
+    bool enable; /* Defaults to disabled. */
     int32_t bias_uA;
     int32_t power_uW;
     bool apc;
     bool bias_valid;
     bool power_valid;
     bool apc_valid;
-} LaserControl_t;
+} LaserRequest_t;
 typedef struct {
     int32_t bias_uA;
     int32_t optical_power_uW;
     uint32_t sample_tick;
     bool valid;
 } LaserTelemetry_t;
+typedef struct {
+    bool enabled;
+    bool apc_active;
+    uint32_t sample_tick;
+    bool valid;
+} LaserStatus_t;
+typedef struct {
+    LaserRequest_t requested; /* Requested settings. */
+    LaserStatus_t actual; /* Confirmed operating state. */
+    LaserTelemetry_t measured; /* Measured current and power. */
+} LaserLaneData_t;
 typedef struct {
     int32_t temperature_mdegC;
     int32_t current_mA;
@@ -66,15 +76,15 @@ typedef struct {
     CommandResultStatus_t result[APP_TASK_COUNT];
     TaskSharedStatus_t task[APP_TASK_COUNT];
     ModuleStatus_t module;
-    LaserTelemetry_t laser;
-    LaserControl_t laser_control;
+    LaserLaneData_t laser[LASER_LANE_COUNT];
     TecTelemetry_t tec;
     AlarmStatus_t alarm;
     FaultStatus_t fault;
     uint32_t revision;
 } SharedSnapshot_t;
 
-/* Init once before tasks run. Initially every section is invalid.
+/* Init once before tasks run. Enable defaults to disabled; other request
+ * fields and published status/measurement sections start invalid.
  * Remaining APIs are task-only, use a finite 10 ms mutex wait, and return
  * false on NULL/uninitialized/lock failure. Never use failed read output.
  * No internal pointers escape. Writers must obey ownership by convention:
@@ -82,17 +92,19 @@ typedef struct {
  * Fault: Safety only. These APIs do not provide access-control enforcement.
  * sample_tick is caller-supplied RTOS acquisition time, not publish time. */
 bool SharedData_Init(void);
+bool SharedData_GetLaserLane(uint8_t lane, LaserLaneData_t *value);
+bool SharedData_UpdateLaserActual(uint8_t lane, const LaserStatus_t *value);
 /* Host only. Result header.source identifies the worker, owner the requester. */
 bool SharedData_UpdateCommandResult(AppTaskId_t owner, const ControlResultMsg_t *result);
 /* Caller writes only its own task slot. Ownership is a code convention. */
 bool SharedData_UpdateTask(AppTaskId_t owner, const TaskSharedStatus_t *value);
 bool SharedData_UpdateModule(const ModuleStatus_t *value);
-bool SharedData_UpdateLaser(const LaserTelemetry_t *value);
+bool SharedData_UpdateLaserMeasured(uint8_t lane, const LaserTelemetry_t *value);
 /* Laser Task only: atomic configuration field updates after queue dispatch. */
-bool SharedData_SetLaserEnable(bool enable);
-bool SharedData_SetLaserBias(int32_t bias_uA);
-bool SharedData_SetLaserPower(int32_t power_uW);
-bool SharedData_SetLaserApc(bool enable);
+bool SharedData_SetLaserRequestedEnable(uint8_t lane_mask, bool enable);
+bool SharedData_SetLaserRequestedBias(uint8_t lane_mask, int32_t bias_uA);
+bool SharedData_SetLaserRequestedPower(uint8_t lane_mask, int32_t power_uW);
+bool SharedData_SetLaserRequestedApc(uint8_t lane_mask, bool enable);
 bool SharedData_UpdateTec(const TecTelemetry_t *value);
 bool SharedData_UpdateAlarm(const AlarmStatus_t *value);
 bool SharedData_GetSnapshot(SharedSnapshot_t *snapshot);

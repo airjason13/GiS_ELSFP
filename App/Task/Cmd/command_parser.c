@@ -44,11 +44,11 @@ static const CmdEntry_t commands[] = {
     /* ===================== MSM Control ==================== */
 	{ "get", "msm",   "status", 0U,     Cmd_GetMsmStatus,    "",         "Show current module state" },
     /* ===================== Laser Control ==================== */
-	{ "get", "laser", "status", 0U, LaserCmd_Status, "", "Show measured laser telemetry" },
-    { "set", "laser", "enable", 1U, LaserCmd_Enable, "<0|1>", "Store requested laser disable/enable" },
-    { "set", "laser", "bias", 1U, LaserCmd_Bias, "<uA>", "Store requested bias current" },
-    { "set", "laser", "power", 1U, LaserCmd_Power, "<uW>", "Store requested optical power target" },
-    { "set", "laser", "apc", 1U, LaserCmd_Apc, "<0|1>", "Store requested APC disable/enable" }
+	{ "get", "laser", "status", 1U, Cmd_GetLaserStatus, "", "Show measured laser telemetry" },
+    { "set", "laser", "enable", 2U, Cmd_SetLaserEnable, "<0|1>", "Store requested laser disable/enable" },
+    { "set", "laser", "bias", 2U, Cmd_SetLaserBias, "<uA>", "Store requested bias current" },
+    { "set", "laser", "power", 2U, Cmd_SetLaserPower, "<uW>", "Store requested optical power target" },
+    { "set", "laser", "apc", 2U, Cmd_SetLaserApc, "<0|1>", "Store requested APC disable/enable" }
 };
 #define CMD_COUNT (sizeof(commands) / sizeof(commands[0]))
 
@@ -75,6 +75,11 @@ static bool HasVerb(const char *verb)
 
 static void PrintUsage(const CmdEntry_t *entry)
 {
+    if (strcmp(entry->target,"laser")==0) {
+        debug_printf("  %s laser <1..8|all> %s%s%s  %s\r\n",entry->verb,entry->field,
+                     entry->value_usage[0]!='\0' ? " " : "",entry->value_usage,entry->description);
+        return;
+    }
     debug_printf("  %s %s %s%s%s  %s\r\n",entry->verb,entry->target,entry->field,
                  entry->value_count!=0U ? " " : "",entry->value_usage,entry->description);
 }
@@ -132,6 +137,24 @@ static void Dispatch(unsigned argc, char *const argv[])
     if (!HasVerb(argv[0])) {
         debug_printf("[CMD] unknown command: %s (type help)\r\n",argv[0]);
         return;
+    }
+    /* Laser syntax: verb laser lane field [value]. Normalize for table matching. */
+    if (argc>=2U && strcmp(argv[1],"laser")==0) {
+        if (argc<4U) { ShowHelp(2U,argv); return; }
+        char *normalized[COMMAND_ARGS_MAX];
+        normalized[0]=argv[0]; normalized[1]=argv[1]; normalized[2]=argv[3];
+        normalized[3]=argv[2];
+        for (unsigned i=4U; i<argc; ++i) { normalized[i]=argv[i]; }
+        for (unsigned i=0U; i<CMD_COUNT; ++i) {
+            const CmdEntry_t *entry=&commands[i];
+            if (!Matches(entry,CMD_PATH_LENGTH,normalized)) { continue; }
+            if (argc-CMD_PATH_LENGTH!=entry->value_count) {
+                debug_printf("[CMD] invalid %s arguments\r\n",argv[0]);PrintUsage(entry);return;
+            }
+            entry->handler(argc-CMD_PATH_LENGTH,normalized+CMD_PATH_LENGTH);
+            return;
+        }
+        debug_printf("[CMD] invalid laser command\r\n");ShowHelp(2U,argv);return;
     }
     if (argc<CMD_PATH_LENGTH) { ShowHelp(argc,argv); return; }
     for (unsigned i=0U; i<CMD_COUNT; ++i) {
